@@ -2,13 +2,8 @@ import pyqrcode
 from fpdf import FPDF
 from pdfrw import PageMerge, PdfReader, PdfWriter
 
-IN_FILEPATH = './pdf/hello.pdf'
-OUT_FILEPATH = './pdf/hello-qr.pdf'
-DOCUMENT_CODE = 12345889846
 QR_CODE_PATH = 'code.png'
-ON_PAGE_INDEX = 1
-# if True, new content will be placed underneath page (painted first)
-UNDERNEATH = False
+ON_PAGE_INDEX = 0
 
 
 def create_qrcode(document_code):
@@ -30,13 +25,13 @@ def create_qrcode(document_code):
     return QR_CODE_PATH, text
 
 
-def insert_qrcode(image_path, text):
-    pdf_file = PdfReader(IN_FILEPATH)
+def add_qr_to_pdf(file_input, file_output, image_path, text):
+    pdf_file = PdfReader(file_input)
     writer = PdfWriter(trailer=pdf_file)
-    PageMerge(pdf_file.pages[0]).add(
+    PageMerge(pdf_file.pages[ON_PAGE_INDEX]).add(
         new_content(image_path, text),
-        prepend=UNDERNEATH).render()
-    writer.write(OUT_FILEPATH)
+        prepend=False).render()
+    writer.write(file_output)
 
 
 def new_content(image_path, text):
@@ -48,3 +43,10 @@ def new_content(image_path, text):
     fpdf.multi_cell(22, 2, text)
     reader = PdfReader(fdata=bytes(fpdf.output()))
     return reader.pages[0]
+
+
+def insert_qrcode(file_input, file_output, document_code):
+    image_path, text = create_qrcode(document_code)
+    add_qr_to_pdf(file_input, file_output, image_path, text)
+
+insert_qrcode('./files/hello.pdf', './files/hello-qr.pdf', 123456889846)
