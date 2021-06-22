@@ -7,17 +7,22 @@ from src.qrcode import create_qrcode, insert_qrcode
 
 INPUT_FOLDER = config('INPUT_FOLDER')
 
+
 def on_created(event):
     print(f"hey, {event.src_path} has been created!")
+
 
 def on_deleted(event):
     print(f"what the f**k! Someone deleted {event.src_path}!")
 
+
 def on_modified(event):
     print(f"hey buddy, {event.src_path} has been modified")
 
+
 def on_moved(event):
     print(f"ok ok ok, someone moved {event.src_path} to {event.dest_path}")
+
 
 if __name__ == "__main__":
     patterns = ["*.pdf"]
@@ -25,9 +30,9 @@ if __name__ == "__main__":
     ignore_directories = False
     case_sensitive = True
     my_event_handler = PatternMatchingEventHandler(
-        patterns, 
-        ignore_patterns, 
-        ignore_directories, 
+        patterns,
+        ignore_patterns,
+        ignore_directories,
         case_sensitive
     )
     my_event_handler.on_created = on_created
@@ -38,8 +43,8 @@ if __name__ == "__main__":
     go_recursively = True
     my_observer = Observer()
     my_observer.schedule(
-        my_event_handler, 
-        path, 
+        my_event_handler,
+        path,
         recursive=go_recursively
     )
     my_observer.start()
@@ -49,6 +54,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         my_observer.stop()
         my_observer.join()
+
 
 '''
 sign_pdf()
