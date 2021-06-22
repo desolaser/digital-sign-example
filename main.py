@@ -1,7 +1,5 @@
 import time
 from decouple import config
-from src.signer import sign_pdf
-from src.qrcode import create_qrcode, insert_qrcode
 from src.file_observer import create_file_observer
 
 INPUT_FOLDER = config('INPUT_FOLDER')
