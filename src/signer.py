@@ -39,10 +39,10 @@ class Signer(hsm.HSM):
                 except PK11.PyKCS11Error as e:
                     continue
 
-                attrDict = dict(list(zip(all_attributes, attributes)))
-                cert = bytes(attrDict[PK11.CKA_VALUE])
+                attrdict = dict(list(zip(all_attributes, attributes)))
+                cert = bytes(attrdict[PK11.CKA_VALUE])
                 # if keyid == bytes(attrDict[PK11.CKA_ID]):
-                return bytes(attrDict[PK11.CKA_ID]), cert
+                return bytes(attrdict[PK11.CKA_ID]), cert
         finally:
             self.logout()
         return None, None
@@ -50,19 +50,19 @@ class Signer(hsm.HSM):
     def sign(self, keyid, data, mech):
         self.login(DEVICE_NAME, TOKEN_PASSWORD)
         try:
-            privKey = self.session.findObjects(
+            priv_key = self.session.findObjects(
                 [(PK11.CKA_CLASS, PK11.CKO_PRIVATE_KEY)])[0]
             mech = getattr(PK11, 'CKM_%s_RSA_PKCS' % mech.upper())
-            sig = self.session.sign(privKey, data, PK11.Mechanism(mech, None))
+            sig = self.session.sign(priv_key, data, PK11.Mechanism(mech, None))
             return bytes(sig)
         finally:
             self.logout()
 
 
-def sign_pdf():
+def sign_pdf(file_input, file_output):
     date = datetime.datetime.utcnow() - datetime.timedelta(hours=12)
     date = date.strftime('%Y%m%d%H%M%S+00\'00\'')
-    signParams = {
+    sign_params = {
         "sigflags": 3,
         "sigpage": 0,
         "sigbutton": True,
@@ -74,17 +74,17 @@ def sign_pdf():
         "signaturebox": (50, 0, 500, 50),
     }
     clshsm = Signer(dllpath)
-    fname = './pdf/hello.pdf'
-    dataPdf = open(fname, 'rb').read()
-    dataSign = pdf.cms.sign(
-        dataPdf, 
-        signParams,
+    fname = file_input
+    data_pdf = open(fname, 'rb').read()
+    data_sign = pdf.cms.sign(
+        data_pdf,
+        sign_params,
         None, None,
         [],
         'sha256',
         clshsm,
     )
-    fname = fname.replace('.pdf', '-signed.pdf')
-    with open(fname, 'wb') as fp:
-        fp.write(dataPdf)
-        fp.write(dataSign)
+    # fname = fname.replace('.pdf', '-signed.pdf')
+    with open(file_output, 'wb') as fp:
+        fp.write(data_pdf)
+        fp.write(data_sign)
