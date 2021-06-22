@@ -20,7 +20,7 @@ def on_moved(event):
     print(f"ok ok ok, someone moved {event.src_path} to {event.dest_path}")
 
 if __name__ == "__main__":
-    patterns = ["*"]
+    patterns = ["*.pdf"]
     ignore_patterns = None
     ignore_directories = False
     case_sensitive = True
