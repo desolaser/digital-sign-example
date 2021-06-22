@@ -1,17 +1,23 @@
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 from src.signer import sign_pdf
-# from src.qrcode import create_qrcode, insert_qrcode
+from src.qrcode import create_qrcode, insert_qrcode
+QRCODE_PDF_SUFFIX = '-qr.pdf'
 SIGNED_PDF_SUFFIX = '-signed.pdf'
 
 def on_created(event):
-    if event.src_path.endswith(SIGNED_PDF_SUFFIX):
+    if event.src_path.endswith(QRCODE_PDF_SUFFIX) or \
+            event.src_path.endswith(SIGNED_PDF_SUFFIX):
         return
 
     # file_name = event.src_path.split('\\')[2]
     print(f"Archivo {event.src_path} ha sido detectado")
     try:
-        sign_pdf(event.src_path, event.src_path.replace('.pdf', SIGNED_PDF_SUFFIX))
+        file_path = event.src_path
+        qrcode_pdf_file_path = file_path.replace('.pdf', QRCODE_PDF_SUFFIX)
+        signed_pdf_file_path = qrcode_pdf_file_path.replace('.pdf', SIGNED_PDF_SUFFIX)
+        insert_qrcode(file_path, qrcode_pdf_file_path, 123456889846)
+        sign_pdf(qrcode_pdf_file_path, signed_pdf_file_path)
     except Exception:
         print("No se pudo firmar el archivo")
     print(f"El archivo {event.src_path} ha sido firmado exitosamente")
