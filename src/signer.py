@@ -1,6 +1,7 @@
 import os
 import sys
 import datetime
+import PyKCS11 as PK11
 from endesive import pdf, hsm
 from decouple import config
 
@@ -11,8 +12,6 @@ if sys.platform == 'win32':
     dllpath = os.environ['PKCS11_MODULE']
 else:
     dllpath = '/usr/lib/WatchData/ProxKey/lib/libwdpkcs_SignatureP11.so'
-
-import PyKCS11 as PK11
 
 
 class Signer(hsm.HSM):
