@@ -107,7 +107,7 @@ class NewContentTestCase(unittest.TestCase):
         mock_fpdf_object = mock.MagicMock(return_value=FPDF)
         mock_fpdf.return_value = mock_fpdf_object
 
-        content = new_content(QR_CODE_PATH, self.text)
+        content = new_content(self.text)
 
         mock_fpdf.assert_called_once()
         mock_fpdf_object.add_page.assert_called_once()
@@ -123,7 +123,7 @@ class NewContentTestCase(unittest.TestCase):
     @mock.patch('src.qrcode.FPDF')
     def test_new_content_image_not_found(self, mock_fpdf):
         with self.assertRaises(FileNotFoundError):
-            content = new_content(QR_CODE_PATH, self.text)
+            content = new_content(self.text)
         self.assertEquals(content, None)
 
 
