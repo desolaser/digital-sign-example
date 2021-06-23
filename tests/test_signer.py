@@ -3,7 +3,6 @@ import hashlib
 import mock
 import os
 import sys
-import PyKCS11 as PK11
 from endesive import pdf
 from src.signer import Signer, sign_pdf
 
@@ -14,7 +13,8 @@ class SignerTestCase(unittest.TestCase):
         if sys.platform == 'win32':
             dllpath = os.environ['PKCS11_MODULE']
         else:
-            dllpath = '/usr/lib/WatchData/ProxKey/lib/libwdpkcs_SignatureP11.so'
+            dllpath = \
+                '/usr/lib/WatchData/ProxKey/lib/libwdpkcs_SignatureP11.so'
         self.signer = Signer(dllpath)
 
     def tearDown(self):
@@ -23,12 +23,14 @@ class SignerTestCase(unittest.TestCase):
     def test_certificate_success(self):
         pk11_object = mock.MagicMock()
         self.signer.session = mock.MagicMock()
-        self.signer.session.findObjects = mock.MagicMock(return_value=[pk11_object])
-        self.signer.session.getAttributeValue = mock.MagicMock(return_value=[(1, 2), (1, 2)])
+        self.signer.session.findObjects = mock.MagicMock(
+            return_value=[pk11_object])
+        self.signer.session.getAttributeValue = mock.MagicMock(
+            return_value=[(1, 2), (1, 2)])
         keyid, cert = self.signer.certificate()
         self.assertIsInstance(keyid, bytes)
         self.assertIsInstance(cert, bytes)
-    
+
     def test_certificate_no_token_detected(self):
         self.signer.session = mock.MagicMock(return_value=None)
         keyid, cert = self.signer.certificate()
@@ -43,7 +45,8 @@ class SignerTestCase(unittest.TestCase):
 
         pk11_object = mock.MagicMock()
         self.signer.session = mock.MagicMock()
-        self.signer.session.findObjects = mock.MagicMock(return_value=[pk11_object])
+        self.signer.session.findObjects = mock.MagicMock(
+            return_value=[pk11_object])
         self.signer.session.sign = mock.MagicMock(return_value=sign_return)
         signature = self.signer.sign(keyid, 'This is an example', 'sha256')
         self.assertIsInstance(signature, bytes)
@@ -86,11 +89,17 @@ class SignPdfTestCase(unittest.TestCase):
     @mock.patch('src.signer.pdf')
     @mock.patch('src.signer.open')
     @mock.patch('src.signer.os')
-    def test_sign_pdf_input_file_cant_be_read(self, mock_os, mock_open, mock_pdf):
+    def test_sign_pdf_input_file_cant_be_read(
+        self,
+        mock_os,
+        mock_open,
+        mock_pdf
+    ):
         mock_os.path.exists.return_value = True
         mock_open.return_value = mock.MagicMock()
         mock_open.side_effect = OSError(2, "File can't be read")
         with self.assertRaises(OSError) as context:
             sign_pdf('unreadable-file.pdf', 'unreadable-file-signed.pdf')
+        self.assertIsInstance(context.exception, FileNotFoundError)
         mock_open.assert_called_once_with('unreadable-file.pdf', 'rb')
         mock_pdf.cms.sign.assert_not_called()
