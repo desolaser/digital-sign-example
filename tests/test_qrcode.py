@@ -43,7 +43,7 @@ class CreateQrCodeTestCase(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             text = create_qrcode(document_code)
         self.assertEquals(
-            context.exception,
+            context.exception.message,
             'Invalid document code, input should be numeric'
         )
         self.assertEquals(text, None)
@@ -93,8 +93,8 @@ class AddQrToPdfTestCase(unittest.TestCase):
         with self.assertRaises(PdfParseError) as context:
             add_qr_to_pdf(input_file, 'output.pdf', self.text)
 
-        mock_pdf_reader.assert_called_with('input.pdf')
-        self.assertEquals(context.exception,
+        mock_pdf_reader.assert_called_with(input_file)
+        self.assertEquals(context.exception.message,
                           'Could not read PDF file notfound.pdf')
 
 
