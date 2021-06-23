@@ -1,4 +1,5 @@
 import unittest
+import hashlib
 import mock
 import os
 import sys
@@ -13,15 +14,44 @@ class SignerTestCase(unittest.TestCase):
             dllpath = os.environ['PKCS11_MODULE']
         else:
             dllpath = '/usr/lib/WatchData/ProxKey/lib/libwdpkcs_SignatureP11.so'
-        self.mock_signer = Signer(dllpath)
+        self.signer = Signer(dllpath)
+
+    def tearDown(self):
+        self.signer = None
 
     def test_certificate_success(self):
-        self.mock_signer.session = mock.MagicMock()
-        mock_pk11_object = mock.MagicMock()
-        self.mock_signer.session.findObjects.return_value = [mock_pk11_object]
-        self.mock_signer.session.getAttributeValue.return_value = [
-            (1, 2), (1, 2)]
-        all_attributes = [PK11.CKA_VALUE, PK11.CKA_ID]
-        keyid, cert = self.mock_signer.certificate()
+        pk11_object = mock.MagicMock()
+        self.signer.session = mock.MagicMock()
+        self.signer.session.findObjects = mock.MagicMock(return_value=[pk11_object])
+        self.signer.session.getAttributeValue = mock.MagicMock(return_value=[(1, 2), (1, 2)])
+        keyid, cert = self.signer.certificate()
         self.assertIsInstance(keyid, bytes)
         self.assertIsInstance(cert, bytes)
+    
+    def test_certificate_no_token_detected(self):
+        self.signer.session = mock.MagicMock(return_value=None)
+        keyid, cert = self.signer.certificate()
+        self.assertRaises(AttributeError)
+        self.assertEqual(keyid, None)
+        self.assertEqual(cert, None)
+
+    def test_sign_success(self):
+        keyid = [0x02, 0xa1, 0xb7, 0x9d]
+        keyid = bytes(keyid)
+        sign_return = hashlib.sha256(b"10101010").digest()
+
+        pk11_object = mock.MagicMock()
+        self.signer.session = mock.MagicMock()
+        self.signer.session.findObjects = mock.MagicMock(return_value=[pk11_object])
+        self.signer.session.sign = mock.MagicMock(return_value=sign_return)
+        signature = self.signer.sign(keyid, 'This is an example', 'sha256')
+        self.assertIsInstance(signature, bytes)
+
+    def test_sign_no_token_detected(self):
+        keyid = [0x02, 0xa1, 0xb7, 0x9d]
+        keyid = bytes(keyid)
+
+        self.signer.session = mock.MagicMock(return_value=None)
+        self.signer.session.findObjects = mock.MagicMock(return_value=None)
+        signature = self.signer.sign(keyid, 'This is an example', 'sha256')
+        self.assertEqual(signature, None)
