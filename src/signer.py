@@ -4,6 +4,7 @@ import datetime
 import PyKCS11 as PK11
 from endesive import pdf, hsm
 from decouple import config
+from endesive.pdf.PyPDF2_annotate.util.validation import instance_of
 
 TOKEN_PASSWORD = config('TOKEN_PASSWORD')
 DEVICE_NAME = config('DEVICE_NAME')
@@ -36,12 +37,15 @@ class Signer(hsm.HSM):
                     attributes = self.session.getAttributeValue(
                         pk11object, all_attributes)
                 except PK11.PyKCS11Error as e:
+                    print(e)
                     continue
 
                 attrdict = dict(list(zip(all_attributes, attributes)))
                 cert = bytes(attrdict[PK11.CKA_VALUE])
                 # if keyid == bytes(attrDict[PK11.CKA_ID]):
                 return bytes(attrdict[PK11.CKA_ID]), cert
+        except AttributeError:
+            print("Session is not initialized")
         finally:
             self.logout()
         return None, None
@@ -54,6 +58,8 @@ class Signer(hsm.HSM):
             mech = getattr(PK11, 'CKM_%s_RSA_PKCS' % mech.upper())
             sig = self.session.sign(priv_key, data, PK11.Mechanism(mech, None))
             return bytes(sig)
+        except Exception:
+            print("Session is not initialized")
         finally:
             self.logout()
 
@@ -74,7 +80,15 @@ def sign_pdf(file_input, file_output):
     }
     clshsm = Signer(dllpath)
     fname = file_input
-    data_pdf = open(fname, 'rb').read()
+
+    if not os.path.exists(fname):
+        raise FileNotFoundError("File wasn't found in the file system")
+
+    try:
+        data_pdf = open(fname, 'rb').read()
+    except (IOError, OSError) as e:
+        raise e
+
     data_sign = pdf.cms.sign(
         data_pdf,
         sign_params,
