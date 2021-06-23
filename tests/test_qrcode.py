@@ -1,7 +1,6 @@
 import unittest
 import mock
-from fpdf import FPDF
-from pdfrw.objects.pdfname import PdfName
+from pdfrw.errors import PdfParseError
 from src.qrcode import LINK_FORMAT, ON_PAGE_INDEX, TEXT_FORMAT, QR_CODE_PATH
 from src.qrcode import create_qrcode, add_qr_to_pdf
 from src.qrcode import new_content, insert_qrcode
@@ -84,11 +83,11 @@ class AddQrToPdfTestCase(unittest.TestCase):
     @mock.patch('src.qrcode.PdfReader', autospec=True)
     def test_add_qr_to_pdf_file_not_found(self, mock_pdf_reader):
         input_file = 'notfound.pdf'
-        mock_pdf_reader.side_effect = pyqrcode.errors.PdfParseError(
+        mock_pdf_reader.side_effect = PdfParseError(
             f'Could not read PDF file {input_file}'
         )
 
-        with self.assertRaises(pyqrcode.errors.PdfParseError) as context:
+        with self.assertRaises(PdfParseError) as context:
             add_qr_to_pdf(input_file, 'output.pdf', self.image_path, self.text)
 
         mock_pdf_reader.assert_called_with('input.pdf')
@@ -144,7 +143,7 @@ class InsertQrCodeTestCase(unittest.TestCase):
     @mock.patch('src.qrcode.add_qr_to_pdf')
     @mock.patch('src.qrcode.create_qrcode')
     def test_insert_qr_code_add_qr_to_pdf_error(self, mock_create_qr, mock_add_qr):
-        mock_create_qr.side_effect = pyqrcode.errors.PdfParseError(
+        mock_create_qr.side_effect = PdfParseError(
             'Could not read PDF file notfound.pdf'
         )
 
