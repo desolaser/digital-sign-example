@@ -71,7 +71,7 @@ class AddQrToPdfTestCase(unittest.TestCase):
         mock_pdf_file.pages = [mock.MagicMock(spec=PdfName)]
         mock_pdf_reader.return_value = mock_pdf_file
 
-        add_qr_to_pdf('input.pdf', 'output.pdf', QR_CODE_PATH, self.text)
+        add_qr_to_pdf('input.pdf', 'output.pdf', self.text)
 
         mock_pdf_reader.assert_called_with('input.pdf')
         mock_pdf_writer.assert_called_with(trailer=mock_pdf_file)
@@ -91,7 +91,7 @@ class AddQrToPdfTestCase(unittest.TestCase):
         )
 
         with self.assertRaises(PdfParseError) as context:
-            add_qr_to_pdf(input_file, 'output.pdf', QR_CODE_PATH, self.text)
+            add_qr_to_pdf(input_file, 'output.pdf', self.text)
 
         mock_pdf_reader.assert_called_with('input.pdf')
         self.assertEquals(context.exception,
