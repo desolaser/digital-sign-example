@@ -53,10 +53,7 @@ def new_content(text):
 
 def insert_qrcode(file_input, file_output, document_code):
     try:
-        image_path, text = create_qrcode(document_code)
-    except TypeError as e:
-        print(e)
-    try:
-        add_qr_to_pdf(file_input, file_output, image_path, text)
-    except PdfParseError as e:
+        text = create_qrcode(document_code)
+        add_qr_to_pdf(file_input, file_output, text)
+    except (TypeError, PdfParseError) as e:
         print(e)
