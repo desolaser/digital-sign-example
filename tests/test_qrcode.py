@@ -75,7 +75,8 @@ class AddQrToPdfTestCase(unittest.TestCase):
         mock_pdf_reader.assert_called_with('input.pdf')
         mock_pdf_writer.assert_called_with(trailer=mock_pdf_file)
         mock_page_merge.assert_called_with(mock_pdf_file.pages[ON_PAGE_INDEX])
-        mock_page_merge.return_value.add.return_value.render.assert_called_once()
+        mock_page_merge.return_value.add.return_value.render.\
+            assert_called_once()
         mock_pdf_writer.return_value.write.assert_called_with('output.pdf')
 
     @mock.patch('src.qrcode.PdfReader', autospec=True)
@@ -102,7 +103,8 @@ class NewContentTestCase(unittest.TestCase):
 
         mock_fpdf.assert_called_once()
         mock_fpdf_object.add_page.assert_called_once()
-        mock_fpdf_object.image.assert_called_once_with(QR_CODE_PATH, 9, 230, 24)
+        mock_fpdf_object.image.assert_called_once_with(
+            QR_CODE_PATH, 9, 230, 24)
         mock_fpdf_object.set_font.assert_called_once_with('Helvetica', size=4)
         mock_fpdf_object.set_y(253)
         mock_fpdf_object.multi_cell(22, 2, self.text)
@@ -121,7 +123,8 @@ class InsertQrCodeTestCase(unittest.TestCase):
 
     @mock.patch('src.qrcode.add_qr_to_pdf')
     @mock.patch('src.qrcode.create_qrcode')
-    def test_insert_qr_code_create_qr_code_error(self, mock_create_qr, mock_add_qr):
+    def test_insert_qr_code_create_qr_code_error(
+            self, mock_create_qr, mock_add_qr):
         mock_create_qr.side_effect = TypeError(
             'Invalid document code, input should be numeric')
         insert_qrcode('input.pdf', 'output.pdf', 123456889846)
@@ -130,7 +133,8 @@ class InsertQrCodeTestCase(unittest.TestCase):
 
     @mock.patch('src.qrcode.add_qr_to_pdf')
     @mock.patch('src.qrcode.create_qrcode')
-    def test_insert_qr_code_add_qr_to_pdf_error(self, mock_create_qr, mock_add_qr):
+    def test_insert_qr_code_add_qr_to_pdf_error(
+            self, mock_create_qr, mock_add_qr):
         mock_add_qr.side_effect = PdfParseError(
             'Could not read PDF file notfound.pdf'
         )
