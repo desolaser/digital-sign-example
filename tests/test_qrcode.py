@@ -19,7 +19,7 @@ class CreateQrCodeTestCase(unittest.TestCase):
     @mock.patch('src.qrcode.pyqrcode')
     def test_create_qrcode_success(self, mock_pyqrcode, mock_qrcode_png):
         mock_pyqrcode.create.return_value = mock_qrcode_png
-        document_code = 1234568898446
+        document_code = 123456889846
 
         text = create_qrcode(document_code)
 
@@ -37,7 +37,6 @@ class CreateQrCodeTestCase(unittest.TestCase):
     Document code should't be an string of characters, it should be a numeric
     input. Should return TypeError.
     '''
-
     def test_create_qrcode_invalid_document_code(self):
         document_code = 'This is an invalid document code'
         with self.assertRaises(TypeError) as context:
@@ -50,7 +49,7 @@ class CreateQrCodeTestCase(unittest.TestCase):
 
 
 class AddQrToPdfTestCase(unittest.TestCase):
-    text = LINK_FORMAT.format(1234568898446)
+    text = LINK_FORMAT.format(123456889846)
 
     '''
     This method should write the pdf with the qr code into the file output if
@@ -85,15 +84,13 @@ class AddQrToPdfTestCase(unittest.TestCase):
         mock_pdf_reader.side_effect = PdfParseError(
             f'Could not read PDF file {input_file}'
         )
-
-        with self.assertRaises(PdfParseError) as context:
+        with self.assertRaises(PdfParseError):
             add_qr_to_pdf(input_file, 'output.pdf', self.text)
-
-        mock_pdf_reader.assert_called_with(input_file)
+            mock_pdf_reader.assert_called_with(input_file)
 
 
 class NewContentTestCase(unittest.TestCase):
-    text = LINK_FORMAT.format(1234568898446)
+    text = LINK_FORMAT.format(123456889846)
 
     @mock.patch('src.qrcode.PdfReader')
     @mock.patch('src.qrcode.FPDF')
@@ -112,18 +109,13 @@ class NewContentTestCase(unittest.TestCase):
         mock_pdf_reader.assert_called_once_with(
             fdata=bytes(mock_fpdf_object.output()))
 
-    def test_new_content_image_not_found(self):
-        with self.assertRaises(FileNotFoundError):
-            content = new_content(self.text)
-            self.assertEquals(content, None)
-
 
 class InsertQrCodeTestCase(unittest.TestCase):
     @mock.patch('src.qrcode.add_qr_to_pdf')
     @mock.patch('src.qrcode.create_qrcode')
     def test_insert_qr_code_success(self, mock_create_qr, mock_add_qr):
-        insert_qrcode('input.pdf', 'output.pdf', 1234568898446)
-        mock_create_qr.assert_called_once_with(1234568898446)
+        insert_qrcode('input.pdf', 'output.pdf', 123456889846)
+        mock_create_qr.assert_called_once_with(123456889846)
         mock_add_qr.assert_called_once_with(
             'input.pdf', 'output.pdf', mock_create_qr.return_value)
 
@@ -132,10 +124,8 @@ class InsertQrCodeTestCase(unittest.TestCase):
     def test_insert_qr_code_create_qr_code_error(self, mock_create_qr, mock_add_qr):
         mock_create_qr.side_effect = TypeError(
             'Invalid document code, input should be numeric')
-
-        insert_qrcode('input.pdf', 'output.pdf', 1234568898446)
-
-        mock_create_qr.assert_called_once_with(1234568898446)
+        insert_qrcode('input.pdf', 'output.pdf', 123456889846)
+        mock_create_qr.assert_called_once_with(123456889846)
         mock_add_qr.assert_not_called()
 
     @mock.patch('src.qrcode.add_qr_to_pdf')
@@ -144,9 +134,7 @@ class InsertQrCodeTestCase(unittest.TestCase):
         mock_add_qr.side_effect = PdfParseError(
             'Could not read PDF file notfound.pdf'
         )
-
-        insert_qrcode('input.pdf', 'output.pdf', 1234568898446)
-
-        mock_create_qr.assert_called_once_with(1234568898446)
+        insert_qrcode('input.pdf', 'output.pdf', 123456889846)
+        mock_create_qr.assert_called_once_with(123456889846)
         mock_add_qr.assert_called_once_with(
             'input.pdf', 'output.pdf', mock_create_qr.return_value)
