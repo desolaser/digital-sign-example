@@ -1,43 +1,53 @@
 import pyqrcode
+import os
 from fpdf import FPDF
-from pdfrw import PageMerge, PdfReader, PdfWriter
+from pdfrw import PageMerge, PdfReader, PdfWriter, PdfParseError
 
-QR_CODE_PATH = 'code.png'
+QR_CODE_PATH = 'temp/code.png'
 ON_PAGE_INDEX = 0
+LINK_FORMAT = \
+    "http://fojas.cl/?cod=&motv=ver_cert&cons=cbr_pvaras&codigo_doc={0}"
+
+TEXT_FORMAT = "Certificado emitido con "
+TEXT_FORMAT += "Firma Electrónica Avanzada "
+TEXT_FORMAT += "Ley N 19799 Autoacordado "
+TEXT_FORMAT += "de la Excma Corte Suprema "
+TEXT_FORMAT += "de Chile.- "
+TEXT_FORMAT += "Cert N {0} Verifique "
+TEXT_FORMAT += "validez en http://fojas.cl"
 
 
 def create_qrcode(document_code):
-    qrcode = pyqrcode.create(
-        f"http://fojas.cl/?cod=&motv=ver_cert&cons=cbr_pvaras&codigo_doc={document_code}")
+    if not isinstance(document_code, (int, float)):
+        raise TypeError('Invalid document code, input should be numeric')
+
+    if not os.path.exists("./temp"):
+        os.mkdir("./temp")
+
+    qrcode = pyqrcode.create(LINK_FORMAT.format(document_code))
     qrcode.png(
         QR_CODE_PATH,
         scale=4,
         module_color=[0, 0, 0, 128],
         background=[0xff, 0xff, 0xff]
     )
-    text = "Certificado emitido con "
-    text += "Firma Electrónica Avanzada "
-    text += "Ley N 19799 Autoacordado "
-    text += "de la Excma Corte Suprema "
-    text += "de Chile.- "
-    text += f"Cert N {document_code} Verifique "
-    text += "validez en http://fojas.cl"
-    return QR_CODE_PATH, text
+    text = TEXT_FORMAT.format(document_code)
+    return text
 
 
-def add_qr_to_pdf(file_input, file_output, image_path, text):
+def add_qr_to_pdf(file_input, file_output, text):
     pdf_file = PdfReader(file_input)
     writer = PdfWriter(trailer=pdf_file)
     PageMerge(pdf_file.pages[ON_PAGE_INDEX]).add(
-        new_content(image_path, text),
+        new_content(text),
         prepend=False).render()
     writer.write(file_output)
 
 
-def new_content(image_path, text):
+def new_content(text):
     fpdf = FPDF()
     fpdf.add_page()
-    fpdf.image(image_path, 9, 230, 24)
+    fpdf.image(QR_CODE_PATH, 9, 230, 24)
     fpdf.set_font('Helvetica', size=4)
     fpdf.set_y(253)
     fpdf.multi_cell(22, 2, text)
@@ -46,7 +56,8 @@ def new_content(image_path, text):
 
 
 def insert_qrcode(file_input, file_output, document_code):
-    image_path, text = create_qrcode(document_code)
-    add_qr_to_pdf(file_input, file_output, image_path, text)
-
-insert_qrcode('./files/hello.pdf', './files/hello-qr.pdf', 123456889846)
+    try:
+        text = create_qrcode(document_code)
+        add_qr_to_pdf(file_input, file_output, text)
+    except (TypeError, PdfParseError) as e:
+        print(e)
