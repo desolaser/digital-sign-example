@@ -34,7 +34,14 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-# Programs
+# Description
+
+The program runs with pyodbc, that is used to query the token information from
+a database. This is used to automatically detect the authorized tokens when
+connected in the computer, so you don't need to insert the password every
+time you run the program.
+
+You can use add-token.py to add a new token to database and use it later.
 
 ## main.py
 
@@ -54,3 +61,18 @@ Credits: Ludovic Rousseau (ludovic.rousseau@free.fr).
 
 You can use this to sign only one pdf. This is used for integration testing
 purposes.
+
+# Environment Variables
+
+## General variables
+
+* **INPUT_FOLDER:** Folder that will be observed by file_observer. You should
+drop the files there to sign the files.
+
+## Database variables
+
+* **DB_DRIVER:** Database driver.
+* **DB_SERVER:** Server IP or MS SQL Instance name.
+* **DB_DATABASE_NAME:** Database name.
+* **DB_USER:** Database user.
+* **DB_PASS:** Database password.
