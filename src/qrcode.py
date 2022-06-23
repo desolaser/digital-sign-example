@@ -1,8 +1,9 @@
 import pyqrcode
+import os
 from fpdf import FPDF
 from pdfrw import PageMerge, PdfReader, PdfWriter, PdfParseError
 
-QR_CODE_PATH = 'code.png'
+QR_CODE_PATH = 'temp/code.png'
 ON_PAGE_INDEX = 0
 LINK_FORMAT = \
     "http://fojas.cl/?cod=&motv=ver_cert&cons=cbr_pvaras&codigo_doc={0}"
@@ -19,6 +20,9 @@ TEXT_FORMAT += "validez en http://fojas.cl"
 def create_qrcode(document_code):
     if not isinstance(document_code, (int, float)):
         raise TypeError('Invalid document code, input should be numeric')
+
+    if not os.path.exists("./temp"):
+        os.mkdir("./temp")
 
     qrcode = pyqrcode.create(LINK_FORMAT.format(document_code))
     qrcode.png(
