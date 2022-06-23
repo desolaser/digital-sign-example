@@ -6,8 +6,7 @@ import PyKCS11 as PK11
 class TokenDetector():
     actual_token = None
 
-    def __init__(self, sign_handler, database_helper):
-        self.sign_handler = sign_handler
+    def __init__(self, database_helper):
         self.database_helper = database_helper
 
     def find_token(self):
