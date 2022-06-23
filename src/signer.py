@@ -4,6 +4,8 @@ import datetime
 import PyKCS11 as PK11
 from endesive import pdf, hsm
 from decouple import config
+from src.database_helper import DatabaseHelper
+from src.token_detector import TokenDetector
 from endesive.pdf.PyPDF2_annotate.util.validation import instance_of
 
 TOKEN_PASSWORD = config('TOKEN_PASSWORD')
@@ -14,12 +16,18 @@ if sys.platform == 'win32':
 else:
     dllpath = '/usr/lib/WatchData/ProxKey/lib/libwdpkcs_SignatureP11.so'
 
+database_helper = DatabaseHelper()
+token_detector = TokenDetector(database_helper)
 
 class Signer(hsm.HSM):
+    token = None
+
+    def __init__(self, dllpath, token):
+        self.token = token
+        super().__init__(dllpath)
+
     def certificate(self):
-        self.login(DEVICE_NAME, TOKEN_PASSWORD)
-        keyid = [0x02, 0xa1, 0xb7, 0x9d]
-        keyid = bytes(keyid)
+        self.login(self.token["device"], self.token["password"])
         try:
             pk11objects = self.session.findObjects(
                 [(PK11.CKA_CLASS, PK11.CKO_CERTIFICATE)])
@@ -42,16 +50,15 @@ class Signer(hsm.HSM):
 
                 attrdict = dict(list(zip(all_attributes, attributes)))
                 cert = bytes(attrdict[PK11.CKA_VALUE])
-                # if keyid == bytes(attrDict[PK11.CKA_ID]):
                 return bytes(attrdict[PK11.CKA_ID]), cert
-        except AttributeError:
+        except Exception:
             print("Session is not initialized")
         finally:
             self.logout()
         return None, None
 
     def sign(self, keyid, data, mech):
-        self.login(DEVICE_NAME, TOKEN_PASSWORD)
+        self.login(self.token["device"], self.token["password"])
         try:
             priv_key = self.session.findObjects(
                 [(PK11.CKA_CLASS, PK11.CKO_PRIVATE_KEY)])[0]
@@ -64,21 +71,28 @@ class Signer(hsm.HSM):
             self.logout()
 
 
-def sign_pdf(file_input, file_output):
-    date = datetime.datetime.utcnow() - datetime.timedelta(hours=12)
+def sign_pdf(file_input, file_output):    
+    token = token_detector.find_token()
+    print(token)
+    if token is None:
+        print("Error al firmar el PDF, no se ha encontrado \
+el token o el token es inválido")
+        return
+
+    date = datetime.datetime.utcnow()
     date = date.strftime('%Y%m%d%H%M%S+00\'00\'')
     sign_params = {
         "sigflags": 3,
         "sigpage": 0,
         "sigbutton": True,
-        "contact": "MACARENA.MOLINA.CORTES322@GMAIL.COM",
+        "contact": token["contact"],
         "location": 'Puerto Varas - Chile',
         "signingdate": date.encode(),
         "reason": 'Conservador de Bienes Raices de Puerto Varas',
-        "signature": 'MACARENA CONSTANZA MOLINA CORTES',
+        "signature": token["signature"],
         "signaturebox": (50, 0, 500, 50),
     }
-    clshsm = Signer(dllpath)
+    clshsm = Signer(dllpath, token)
     fname = file_input
 
     if not os.path.exists(fname):
