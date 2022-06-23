@@ -19,6 +19,10 @@ i don't know if the program will work correctly with other models.
 
 # Configure
 
+First, you should copy .env.example and name the new file as .env. Then
+configure the variables, the description of each variable should be available
+in [Environment Variables](#environment-variables) section.
+
 ```bash
 # Clone the repository
 git clone https://github.com/desolaser/digital-sign-example.git
