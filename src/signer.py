@@ -44,18 +44,60 @@ class Signer(hsm.HSM):
                 try:
                     attributes = self.session.getAttributeValue(
                         pk11object, all_attributes)
-                except PK11.PyKCS11Error as e:
+                except Exception as e:
                     print(e)
                     continue
 
                 attrdict = dict(list(zip(all_attributes, attributes)))
                 cert = bytes(attrdict[PK11.CKA_VALUE])
-                return bytes(attrdict[PK11.CKA_ID]), cert
+                key_id = bytes(attrdict[PK11.CKA_ID])
+                if key_id == b'\xfb\n\xa5q?=11':
+                    return bytes(key_id), cert
         except Exception:
             print("Session is not initialized")
         finally:
             self.logout()
         return None, None
+
+    def get_pk11_object_info(self):
+        self.login(self.token["device"], self.token["password"])
+        try:
+            pk11objects = self.session.findObjects(
+                [(PK11.CKA_CLASS, PK11.CKO_CERTIFICATE)])
+            all_attributes = [
+                PK11.CKA_SUBJECT,
+                PK11.CKA_VALUE,
+                PK11.CKA_ISSUER,
+                PK11.CKA_CERTIFICATE_CATEGORY,
+                PK11.CKA_END_DATE,
+                PK11.CKA_ID,
+            ]        
+            print ("Found %d objects: %s" % (len(pk11objects), [x.value() for x in pk11objects]))
+
+            for pk11object in pk11objects:
+                try:
+                    attributes = self.session.getAttributeValue(
+                        pk11object, all_attributes)
+                except Exception as e:
+                    print(e)
+                    continue
+
+                attrdict = dict(list(zip(all_attributes, attributes)))
+                end_date = bytes(attrdict[PK11.CKA_SUBJECT])
+                value = bytes(attrdict[PK11.CKA_VALUE])
+                issuer = bytes(attrdict[PK11.CKA_ISSUER])
+                cert = bytes(attrdict[PK11.CKA_CERTIFICATE_CATEGORY])
+                end_date = bytes(attrdict[PK11.CKA_END_DATE])
+                key_id = bytes(attrdict[PK11.CKA_ID])
+
+                if key_id == b'\xfb\n\xa5q?=11':
+                    print(end_date)
+                    print(key_id)
+                    print("true")
+        except Exception as e:
+            print(e)
+        finally:
+            self.logout()
 
     def sign(self, keyid, data, mech):
         self.login(self.token["device"], self.token["password"])
@@ -73,7 +115,6 @@ class Signer(hsm.HSM):
 
 def sign_pdf(file_input, file_output):    
     token = token_detector.find_token()
-    print(token)
     if token is None:
         print("Error al firmar el PDF, no se ha encontrado \
 el token o el token es inválido")
