@@ -29,7 +29,7 @@ class DatabaseHelper:
         try: 
             _, cursor = self.get_connection_cursor()
             cursor.execute(f"""
-                SELECT Nombre, Contraseña, Dispositivo, Firma, Contacto FROM [BdConservador].[dbo].[BdTokenFirma]
+                SELECT Nombre, Contraseña, Dispositivo, Firma, Contacto, KeyId FROM [BdConservador].[dbo].[BdTokenFirma]
                 WHERE SerialNumber = '{serial_number}'
             """)
             for row in cursor:
@@ -38,7 +38,8 @@ class DatabaseHelper:
                     "password": row[1].strip(),
                     "device": row[2].strip(),
                     "signature": row[3].strip(),
-                    "contact": row[4].strip()
+                    "contact": row[4].strip(),
+                    "key_id": row[5].strip()
                 }
                 return token
 
